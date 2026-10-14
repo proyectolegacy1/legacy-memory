@@ -1,77 +1,118 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>LEGACY - Reconocimiento Visual</title>
-  <!-- Librerías WebAR ligeras para navegador móvil -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>LEGACY 0.2 - Visión</title>
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
   <style>
-    body { margin: 0; overflow: hidden; font-family: sans-serif; }
-    #overlay {
-      position: absolute;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 1000;
-      background: rgba(0,0,0,0.75);
-      color: #fff;
-      padding: 12px 24px;
-      border-radius: 20px;
-      font-size: 14px;
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    #ui-container {
+      position: fixed;
+      bottom: 25px;
+      left: 0;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      z-index: 9999;
       pointer-events: none;
+    }
+    .badge {
+      background: rgba(0, 0, 0, 0.85);
+      color: #ffffff;
+      padding: 10px 20px;
+      border-radius: 25px;
+      font-size: 14px;
+      border: 1px solid #00ffcc;
       text-align: center;
-      border: 1px solid #444;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    }
+    .btn-audio {
+      background: #00ffcc;
+      color: #000;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 13px;
+      cursor: pointer;
+      pointer-events: auto;
     }
   </style>
 </head>
 <body>
 
-  <div id="overlay">Apunta la cámara hacia el diseño del tatuaje</div>
+  <div id="ui-container">
+    <div id="status-badge" class="badge">Iniciando cámara y escáner...</div>
+    <button id="audio-btn" class="btn-audio">Tocar para habilitar sonido</button>
+  </div>
 
-  <!-- Escena AR apuntando al archivo compilado targets.mind -->
-  <a-scene mindar-image="imageTargetSrc: ./targets.mind;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+  <audio id="track" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" preload="auto" loop></audio>
+
+  <a-scene 
+    mindar-image="imageTargetSrc: ./targets.mind; autoStart: true; uiLoading: no; uiError: no;" 
+    color-space="sRGB" 
+    renderer="colorManagement: true, physicallyCorrectLights" 
+    vr-mode-ui="enabled: false" 
+    device-orientation-permission-ui="enabled: false">
     
-    <a-assets>
-      <!-- Audio cargado previamente -->
-      <audio id="legacy-audio" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" preload="auto"></audio>
-    </a-assets>
-
     <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-    <!-- Objetivo detectado: targetIndex 0 corresponde a la imagen compilada -->
-    <a-entity mindar-image-target="targetIndex: 0" id="target-entity">
-      <!-- Plano visual semitransparente que brilla al reconocer el diseño -->
-      <a-plane color="#00ffcc" opacity="0.3" position="0 0 0" height="1" width="1" rotation="0 0 0"></a-plane>
+    <a-entity mindar-image-target="targetIndex: 0" id="target">
+      <!-- Malla visual que se dibuja exactamente encima del tatuaje al reconocerlo -->
+      <a-plane color="#00ffcc" opacity="0.4" position="0 0 0" height="1" width="1"></a-plane>
     </a-entity>
   </a-scene>
 
   <script>
-    const targetEntity = document.querySelector('#target-entity');
-    const audio = document.querySelector('#legacy-audio');
-    const overlay = document.querySelector('#overlay');
+    const target = document.querySelector('#target');
+    const badge = document.querySelector('#status-badge');
+    const audio = document.querySelector('#track');
+    const audioBtn = document.querySelector('#audio-btn');
 
-    // Evento: La cámara detectó el tatuaje
-    targetEntity.addEventListener("targetFound", () => {
-      overlay.innerText = "¡Tatuaje reconocido! Reproduciendo...";
-      overlay.style.borderColor = "#00ffcc";
-      audio.play().catch(e => {
-        overlay.innerText = "Toca la pantalla para activar el audio";
+    let audioReady = false;
+
+    // Desbloqueo del audio para políticas móviles
+    audioBtn.addEventListener('click', () => {
+      audio.play().then(() => {
+        audio.pause();
+        audioReady = true;
+        audioBtn.style.display = 'none';
+        badge.innerText = 'Audio listo. Apunta al tatuaje.';
+      }).catch(err => {
+        console.error(err);
       });
     });
 
-    // Evento: Se perdió de vista el tatuaje
-    targetEntity.addEventListener("targetLost", () => {
-      overlay.innerText = "Apunta la cámara hacia el diseño del tatuaje";
-      overlay.style.borderColor = "#444";
+    target.addEventListener("targetFound", () => {
+      badge.innerText = "¡Tatuaje detectado!";
+      badge.style.borderColor = "#00ffcc";
+      if (audioReady) {
+        audio.play();
+      }
+    });
+
+    target.addEventListener("targetLost", () => {
+      badge.innerText = "Buscando diseño...";
+      badge.style.borderColor = "#ff4444";
       audio.pause();
     });
 
-    // Permitir interacción táctil si el navegador bloquea el autoplay de audio
-    window.addEventListener('click', () => {
-      if (audio.paused && overlay.innerText.includes("Reproduciendo")) {
-        audio.play();
-      }
+    // Diagnóstico en caso de error cargando el archivo .mind
+    const scene = document.querySelector('a-scene');
+    scene.addEventListener("arReady", () => {
+      badge.innerText = "Cámara lista. Apunta al diseño.";
+    });
+    scene.addEventListener("arError", (ev) => {
+      badge.innerText = "Error: no se encontró targets.mind en la raíz.";
+      badge.style.borderColor = "#ff0000";
     });
   </script>
 </body>
