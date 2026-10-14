@@ -1,70 +1,78 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LEGACY - Recuerdo Digital</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>LEGACY - Reconocimiento Visual</title>
+  <!-- Librerías WebAR ligeras para navegador móvil -->
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      background-color: #0d0d0d;
-      color: #f5f5f5;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      padding: 20px;
+    body { margin: 0; overflow: hidden; font-family: sans-serif; }
+    #overlay {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      background: rgba(0,0,0,0.75);
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 20px;
+      font-size: 14px;
+      pointer-events: none;
       text-align: center;
-    }
-    .card {
-      background: #1a1a1a;
-      border: 1px solid #2e2e2e;
-      border-radius: 16px;
-      padding: 30px 20px;
-      max-width: 380px;
-      width: 100%;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    }
-    h1 {
-      font-size: 1.4rem;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      margin-bottom: 8px;
-      color: #e0e0e0;
-    }
-    p.subtitle {
-      font-size: 0.9rem;
-      color: #888;
-      margin-bottom: 24px;
-    }
-    audio {
-      width: 100%;
-      margin: 15px 0;
-      outline: none;
-    }
-    .status {
-      font-size: 0.8rem;
-      color: #555;
-      margin-top: 20px;
+      border: 1px solid #444;
     }
   </style>
 </head>
 <body>
 
-  <div class="card">
-    <h1>LEGACY</h1>
-    <p class="subtitle" id="memory-title">Recuerdo Vinculado</p>
+  <div id="overlay">Apunta la cámara hacia el diseño del tatuaje</div>
 
-    <!-- Reproductor nativo compatible con iOS y Android -->
-    <audio id="audio-player" controls preload="metadata">
-      <source src="audio_prueba.mp3" type="audio/mpeg">
-      Tu navegador no soporta reproducción de audio.
-    </audio>
+  <!-- Escena AR apuntando al archivo compilado targets.mind -->
+  <a-scene mindar-image="imageTargetSrc: ./targets.mind;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+    
+    <a-assets>
+      <!-- Audio cargado previamente -->
+      <audio id="legacy-audio" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" preload="auto"></audio>
+    </a-assets>
 
-    <div class="status">ID de verificación: <span id="tag-id">#001</span></div>
-  </div>
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
+    <!-- Objetivo detectado: targetIndex 0 corresponde a la imagen compilada -->
+    <a-entity mindar-image-target="targetIndex: 0" id="target-entity">
+      <!-- Plano visual semitransparente que brilla al reconocer el diseño -->
+      <a-plane color="#00ffcc" opacity="0.3" position="0 0 0" height="1" width="1" rotation="0 0 0"></a-plane>
+    </a-entity>
+  </a-scene>
+
+  <script>
+    const targetEntity = document.querySelector('#target-entity');
+    const audio = document.querySelector('#legacy-audio');
+    const overlay = document.querySelector('#overlay');
+
+    // Evento: La cámara detectó el tatuaje
+    targetEntity.addEventListener("targetFound", () => {
+      overlay.innerText = "¡Tatuaje reconocido! Reproduciendo...";
+      overlay.style.borderColor = "#00ffcc";
+      audio.play().catch(e => {
+        overlay.innerText = "Toca la pantalla para activar el audio";
+      });
+    });
+
+    // Evento: Se perdió de vista el tatuaje
+    targetEntity.addEventListener("targetLost", () => {
+      overlay.innerText = "Apunta la cámara hacia el diseño del tatuaje";
+      overlay.style.borderColor = "#444";
+      audio.pause();
+    });
+
+    // Permitir interacción táctil si el navegador bloquea el autoplay de audio
+    window.addEventListener('click', () => {
+      if (audio.paused && overlay.innerText.includes("Reproduciendo")) {
+        audio.play();
+      }
+    });
+  </script>
 </body>
 </html>
