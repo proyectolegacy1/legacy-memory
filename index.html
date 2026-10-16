@@ -13,14 +13,20 @@
       background-color: #050505;
       font-family: 'Georgia', 'Times New Roman', serif;
     }
-    /* Cabecera superior con identidad LEGACY */
+
+    /* Ocultar por completo el botón blanco VR de A-Frame */
+    .a-enter-vr, .a-enter-ar, .a-enter-vr-button {
+      display: none !important;
+    }
+
+    /* Cabecera superior con logo grande e integrado */
     #top-header {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
-      padding: 15px 10px;
-      background: linear-gradient(180deg, rgba(5,5,5,0.92) 0%, rgba(5,5,5,0) 100%);
+      padding: 18px 10px 30px 10px;
+      background: linear-gradient(180deg, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.45) 65%, rgba(0,0,0,0) 100%);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -28,13 +34,16 @@
       pointer-events: none;
     }
     #top-header img {
-      max-height: 62px;
-      width: auto;
-      filter: drop-shadow(0 2px 8px rgba(0,0,0,0.8));
+      height: 135px; /* Más del doble de grande */
+      max-width: 85vw;
+      object-fit: contain;
+      /* Elimina visualmente el cuadro negro de fondo del logo */
+      mix-blend-mode: screen;
+      border-radius: 12px;
     }
     .brand-fallback {
       color: #EED9B3;
-      font-size: 20px;
+      font-size: 28px;
       letter-spacing: 6px;
       font-weight: bold;
       text-shadow: 0 2px 6px rgba(0,0,0,0.9);
@@ -42,14 +51,15 @@
     .brand-sub {
       color: #C5A070;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      font-size: 9px;
+      font-size: 11px;
       letter-spacing: 5px;
       margin-top: 4px;
     }
+
     /* Controles inferiores */
     #ui-container {
       position: fixed;
-      bottom: 28px;
+      bottom: 30px;
       left: 0;
       width: 100%;
       display: flex;
@@ -60,21 +70,22 @@
       pointer-events: none;
     }
     .badge {
-      background: rgba(8, 8, 8, 0.9);
+      background: rgba(8, 8, 8, 0.92);
       color: #EED9B3;
-      padding: 11px 24px;
+      padding: 12px 22px;
       border-radius: 30px;
       font-size: 13px;
-      letter-spacing: 1px;
+      letter-spacing: 0.8px;
       border: 1px solid #C5A070;
       text-align: center;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.7), 0 0 12px rgba(197, 160, 112, 0.2);
+      max-width: 88vw;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.8), 0 0 12px rgba(197, 160, 112, 0.25);
     }
     .btn-audio {
       background: linear-gradient(135deg, #EED9B3 0%, #C5A070 50%, #8C6B3F 100%);
       color: #050505;
       border: 1px solid #EED9B3;
-      padding: 12px 26px;
+      padding: 13px 28px;
       border-radius: 25px;
       font-weight: bold;
       font-size: 12px;
@@ -82,13 +93,13 @@
       text-transform: uppercase;
       cursor: pointer;
       pointer-events: auto;
-      box-shadow: 0 4px 15px rgba(197, 160, 112, 0.35);
+      box-shadow: 0 4px 15px rgba(197, 160, 112, 0.4);
     }
   </style>
 </head>
 <body>
 
-  <!-- Encabezado Corporativo -->
+  <!-- Encabezado Corporativo Grande -->
   <div id="top-header">
     <img src="./logo-legacy.png" alt="LEGACY" onerror="this.style.display='none'; document.getElementById('fallback-title').style.display='block';">
     <div id="fallback-title" style="display:none; text-align:center;">
@@ -110,6 +121,7 @@
     color-space="sRGB" 
     renderer="colorManagement: true, physicallyCorrectLights" 
     vr-mode-ui="enabled: false" 
+    xr-mode-ui="enabled: false"
     device-orientation-permission-ui="enabled: false">
     
     <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
